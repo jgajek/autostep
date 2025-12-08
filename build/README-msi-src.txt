@@ -5,14 +5,15 @@ Prereqs:
 - PowerShell (pwsh recommended)
 
 Install WiX Toolset:
-- Download WiX Toolset 4.x or 6.x from https://wixtoolset.org/ and install.
+- Download WiX Toolset 4.x or 6.x from the official GitHub releases: https://github.com/wixtoolset/wix/releases and install.
 - Ensure `wix.exe` is on PATH (e.g., `C:\Program Files\WiX Toolset v6\bin` or `C:\Program Files (x86)\WiX Toolset v4\bin`).
 - Verify: run `wix -?` in a new terminal.
 
 Steps:
 1) Open PowerShell in the unpacked package root (contains autostep.exe, manifest.json, workflows/, artifacts/, build/).
-2) Run: `pwsh build/wix/build.ps1`
-   - To override the version: `pwsh build/wix/build.ps1 -Version X.Y.Z`
+2) Run: `pwsh -File .\build\wix\build.ps1`
+   - To override the version: `pwsh -File .\build\wix\build.ps1 -Version X.Y.Z`
+   - If ExecutionPolicy blocks it: add `-ExecutionPolicy Bypass`.
 3) Output MSI: `build/wix/dist/autostep-<version>.msi`
 
 Install the Autostep MSI:

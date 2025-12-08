@@ -113,7 +113,7 @@ Extensibility: versioned action schema; new actions added with feature flags/def
   `set GOOS=windows`  
   `set GOARCH=amd64`  
   `go build -ldflags "-X main.version=0.1.0 -X main.commit=REPLACE_WITH_GIT_SHA -X main.buildDate=%DATE%" -o autostep.exe ./cmd/autostep`
-- Build MSI: `pwsh build/wix/build.ps1 -Version 0.1.0`.
+- Build MSI: from the package root, run `pwsh -File .\build\wix\build.ps1 -Version 0.1.0` (or inside pwsh: `.\build\wix\build.ps1`). If ExecutionPolicy blocks it, add `-ExecutionPolicy Bypass`. Paths with spaces are supported by the script.
 - Output: `build/wix/dist/autostep-0.1.0.msi`. Installs service + seeds ProgramData cache + SafeBoot registry entries + Event Log source.
 - For WiX install steps and MSI installation notes, see `build/README-msi-src.txt` (included in the MSI source bundle).
 

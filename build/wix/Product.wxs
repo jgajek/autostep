@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
-  <Package Name="Autostep" Manufacturer="Autostep" Version="$(var.Version)" Language="1033" UpgradeCode="5A1F1F4C-2A0D-4E4A-A3B5-6C1A3211F7AA" Platform="x64" Compressed="yes">
+  <Package Name="Autostep" Manufacturer="Autostep" Version="$(var.Version)" Language="1033" UpgradeCode="5A1F1F4C-2A0D-4E4A-A3B5-6C1A3211F7AA" Compressed="yes">
     <SummaryInformation Description="Autostep Workflow Agent" />
     <MajorUpgrade DowngradeErrorMessage="A newer version of Autostep is already installed." />
     <MediaTemplate />
@@ -14,42 +14,40 @@
   </Package>
 
   <Fragment>
-    <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="ProgramFiles64Folder">
-        <Directory Id="INSTALLFOLDER" Name="Autostep">
-          <Component Id="AutostepExe" Guid="A44D962A-4F60-4740-8780-0B9F7B2DBE05">
-            <File Id="AutostepExeFile" Source="$(var.SourceDir)\autostep.exe" />
-            <ServiceInstall Id="AutostepService" Name="Autostep" DisplayName="Autostep Workflow Agent" Description="Runs declarative workflows with reboot/resume support." Start="auto" Type="ownProcess" ErrorControl="normal" Vital="yes" />
-            <ServiceControl Id="AutostepServiceControl" Name="Autostep" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
-            <RegistryKey Root="HKLM" Key="SYSTEM\CurrentControlSet\Services\EventLog\Application\Autostep">
-              <RegistryValue Type="string" Name="EventMessageFile" Value="[#AutostepExeFile]" />
-            </RegistryKey>
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Autostep">
+        <Component Id="AutostepExe" Guid="A44D962A-4F60-4740-8780-0B9F7B2DBE05">
+          <File Id="AutostepExeFile" Source="$(var.SourceDir)\autostep.exe" />
+          <ServiceInstall Id="AutostepService" Name="Autostep" DisplayName="Autostep Workflow Agent" Description="Runs declarative workflows with reboot/resume support." Start="auto" Type="ownProcess" ErrorControl="normal" Vital="yes" />
+          <ServiceControl Id="AutostepServiceControl" Name="Autostep" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
+          <RegistryKey Root="HKLM" Key="SYSTEM\CurrentControlSet\Services\EventLog\Application\Autostep">
+            <RegistryValue Type="string" Name="EventMessageFile" Value="[#AutostepExeFile]" />
+          </RegistryKey>
+        </Component>
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="CommonAppDataFolder">
+      <Directory Id="AUTOSTEP_DATAROOT" Name="Autostep">
+        <Component Id="AutostepDataDirs" Guid="51F26FBA-D507-4F2D-8E4D-6C8334F6C1B8">
+          <CreateFolder />
+          <RegistryValue Root="HKLM" Key="Software\Autostep" Name="DataRoot" Type="string" Value="[AUTOSTEP_DATAROOT]" />
+        </Component>
+        <Directory Id="AUTOSTEP_WORKFLOWS" Name="workflows">
+          <Component Id="AutostepWorkflows" Guid="3E9C1F0D-1D60-45E8-8F60-A8F5F9F5E2F2">
+            <File Source="$(var.SourceDir)\workflows\sample_copy.yaml" />
+            <File Source="$(var.SourceDir)\workflows\safemode_copy.yaml" />
           </Component>
         </Directory>
-      </Directory>
-      <Directory Id="CommonAppDataFolder">
-        <Directory Id="AUTOSTEP_DATAROOT" Name="Autostep">
-          <Component Id="AutostepDataDirs" Guid="51F26FBA-D507-4F2D-8E4D-6C8334F6C1B8">
-            <CreateFolder />
-            <RegistryValue Root="HKLM" Key="Software\Autostep" Name="DataRoot" Type="string" Value="[AUTOSTEP_DATAROOT]" />
-          </Component>
-          <Directory Id="AUTOSTEP_WORKFLOWS" Name="workflows">
-            <Component Id="AutostepWorkflows" Guid="3E9C1F0D-1D60-45E8-8F60-A8F5F9F5E2F2">
-              <File Source="$(var.SourceDir)\workflows\sample_copy.yaml" />
-              <File Source="$(var.SourceDir)\workflows\safemode_copy.yaml" />
-            </Component>
-          </Directory>
-          <Directory Id="AUTOSTEP_ARTIFACTS" Name="artifacts">
-            <Component Id="AutostepArtifacts" Guid="30F2C3F0-60E0-4D3A-AE64-472634A4F8F8">
-              <File Source="$(var.SourceDir)\artifacts\hello.txt" />
-            </Component>
-          </Directory>
-          <Component Id="AutostepManifest" Guid="7D5A8DBB-B8E2-47F5-9E6E-0B91A7B5B641">
-            <File Source="$(var.SourceDir)\manifest.json" />
+        <Directory Id="AUTOSTEP_ARTIFACTS" Name="artifacts">
+          <Component Id="AutostepArtifacts" Guid="30F2C3F0-60E0-4D3A-AE64-472634A4F8F8">
+            <File Source="$(var.SourceDir)\artifacts\hello.txt" />
           </Component>
         </Directory>
+        <Component Id="AutostepManifest" Guid="7D5A8DBB-B8E2-47F5-9E6E-0B91A7B5B641">
+          <File Source="$(var.SourceDir)\manifest.json" />
+        </Component>
       </Directory>
-    </Directory>
+    </StandardDirectory>
   </Fragment>
 
   <Fragment>

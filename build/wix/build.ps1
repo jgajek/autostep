@@ -31,8 +31,8 @@ $msi = Join-Path $OutDir "autostep-$Version.msi"
 
 & wix.exe build $wxs `
     -o "$msi" `
-    -d:SourceDir="$sourceDir" `
-    -d:Version="$Version" `
+    -d "SourceDir=$sourceDir" `
+    -d "Version=$Version" `
     -arch x64
 
 Write-Host "Built MSI: $msi"

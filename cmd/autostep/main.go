@@ -41,11 +41,6 @@ func usage() {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		usage()
-		os.Exit(1)
-	}
-
 	root := paths.DefaultRoot()
 	p := paths.FromRoot(root)
 	if err := paths.Ensure(p); err != nil {
@@ -55,6 +50,17 @@ func main() {
 	logger, err := logging.Setup(p.LogsDir)
 	if err != nil {
 		log.Fatalf("failed to setup logging: %v", err)
+	}
+
+	// If running as a Windows service (non-interactive) and no args were supplied,
+	// automatically start service mode so the SCM can launch us without arguments.
+	if len(os.Args) < 2 {
+		if !service.Interactive() {
+			runService(logger, p)
+			return
+		}
+		usage()
+		os.Exit(1)
 	}
 
 	cmd := os.Args[1]

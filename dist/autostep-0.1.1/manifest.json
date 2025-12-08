@@ -1,0 +1,21 @@
+{
+  "workflows": [
+    {
+      "name": "sample_copy",
+      "path": "workflows/sample_copy.yaml",
+      "version": "1.0.0",
+      "artifacts": [
+        "artifacts/hello.txt"
+      ]
+    },
+    {
+      "name": "safemode_copy",
+      "path": "workflows/safemode_copy.yaml",
+      "version": "1.0.0",
+      "artifacts": [
+        "artifacts/hello.txt"
+      ]
+    }
+  ]
+}
+

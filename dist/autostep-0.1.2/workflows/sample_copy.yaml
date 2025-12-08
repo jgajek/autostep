@@ -1,0 +1,13 @@
+version: 1
+name: sample_copy
+steps:
+  - id: copy-hello
+    action: copy
+    from: cache://hello.txt
+    to: C:\Temp\autostep_hello.txt
+  - id: verify-hello
+    action: verify
+    assertions:
+      - kind: file_exists
+        path: C:\Temp\autostep_hello.txt
+

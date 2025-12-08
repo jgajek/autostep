@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 VERSION_FILE="$ROOT/build/version.txt"
 DIST_DIR="$ROOT/dist"
+MSI_DIR="$DIST_DIR/msi-src"
 
 function bump_patch() {
   local v="$1"
@@ -29,8 +30,8 @@ echo "$NEW_VERSION" > "$VERSION_FILE"
 
 echo "Building autostep version $NEW_VERSION"
 
-mkdir -p "$DIST_DIR"
-STAGE_DIR="$DIST_DIR/autostep-$NEW_VERSION"
+mkdir -p "$MSI_DIR"
+STAGE_DIR="$MSI_DIR/autostep-$NEW_VERSION"
 rm -rf "$STAGE_DIR"
 mkdir -p "$STAGE_DIR"
 
@@ -51,12 +52,12 @@ mkdir -p "$STAGE_DIR/build/wix"
 cp "$ROOT/build/wix/Product.wxs" "$STAGE_DIR/build/wix/Product.wxs"
 cp "$ROOT/build/wix/build.ps1" "$STAGE_DIR/build/wix/build.ps1"
 
-pushd "$DIST_DIR" >/dev/null
+pushd "$MSI_DIR" >/dev/null
 ZIP_NAME="autostep-msi-src-$NEW_VERSION.zip"
 rm -f "$ZIP_NAME"
 zip -r "$ZIP_NAME" "autostep-$NEW_VERSION" >/dev/null
 popd >/dev/null
 
-echo "Packaged: $DIST_DIR/$ZIP_NAME"
+echo "Packaged: $MSI_DIR/$ZIP_NAME"
 echo "Next: copy the zip to Windows, unzip, and run: pwsh build/wix/build.ps1"
 

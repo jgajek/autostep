@@ -116,6 +116,17 @@ Extensibility: versioned action schema; new actions added with feature flags/def
 - Build MSI: `pwsh build/wix/build.ps1 -Version 0.1.0`.
 - Output: `build/wix/dist/autostep-0.1.0.msi`. Installs service + seeds ProgramData cache + SafeBoot registry entries + Event Log source.
 
+### Install WiX Toolset (Windows)
+- Download WiX Toolset 3.14 from https://wixtoolset.org/ and install.
+- Ensure `candle.exe` and `light.exe` are on PATH (typically `C:\Program Files (x86)\WiX Toolset v3.14\bin`).
+- Verify: run `candle -?` and `light -?` in a new terminal.
+
+### Install the Autostep MSI (Windows)
+- Obtain the built MSI (e.g., `autostep-0.1.0.msi`).
+- Run from an elevated prompt: `msiexec /i autostep-0.1.0.msi /qn` for silent install, or double-click for GUI.
+- Service `Autostep` will be installed (Automatic start) and SafeBoot registry keys will allow it to start in Safe Mode/Networking.
+- ProgramData cache is seeded under `C:\ProgramData\Autostep\` with workflows/artifacts/manifest.
+
 ## Security notes
 - Service runs as LocalSystem by default (required for registry/system changes); consider configurable service account if reduced privileges are acceptable.
 - Validate all downloaded workflow definitions and artifacts with signature/hash.

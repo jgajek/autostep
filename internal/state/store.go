@@ -118,7 +118,7 @@ func (s *Store) StartRun(runID, workflowName string, totalSteps int) error {
 		Steps:            make([]StepRecord, totalSteps),
 		TotalSteps:       totalSteps,
 	}
-	return s.persist()
+	return s.persistLocked()
 }
 
 // MarkStepPending records a step as pending.
@@ -207,13 +207,6 @@ func (s *Store) MarkRunCompleted(runID string) error {
 	}
 	rec.Status = StatusCompleted
 	rec.UpdatedAt = time.Now().UTC()
-	return s.persistLocked()
-}
-
-// persist writes state to disk.
-func (s *Store) persist() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	return s.persistLocked()
 }
 

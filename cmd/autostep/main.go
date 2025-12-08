@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/autostep/autostep/internal/actions"
@@ -170,7 +171,13 @@ func loadWorkflowByName(p paths.Paths, name string) (*workflow.Workflow, error) 
 
 	wfPath := ref.Path
 	if !filepath.IsAbs(wfPath) {
-		wfPath = filepath.Join(p.WorkflowsDir, wfPath)
+		clean := filepath.Clean(wfPath)
+		// If the manifest path already starts with "workflows", treat it as relative to root to avoid double "workflows/workflows".
+		if strings.HasPrefix(clean, "workflows"+string(filepath.Separator)) || strings.HasPrefix(clean, "workflows/") {
+			wfPath = filepath.Join(p.Root, clean)
+		} else {
+			wfPath = filepath.Join(p.WorkflowsDir, clean)
+		}
 	}
 
 	return workflow.Load(wfPath)

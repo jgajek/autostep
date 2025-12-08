@@ -20,6 +20,7 @@
           <File Id="AutostepExeFile" Source="$(var.SourceDir)\autostep.exe" />
             <ServiceInstall Id="AutostepService" Name="Autostep" DisplayName="Autostep Workflow Agent" Description="Runs declarative workflows with reboot/resume support." Start="auto" Type="ownProcess" ErrorControl="normal" Vital="yes" Arguments="serve" />
           <ServiceControl Id="AutostepServiceControl" Name="Autostep" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
+            <Environment Id="EnvAutostepPath" Name="PATH" Action="set" System="yes" Permanent="no" Part="last" Value="[INSTALLFOLDER]" />
           <RegistryKey Root="HKLM" Key="SYSTEM\CurrentControlSet\Services\EventLog\Application\Autostep">
             <RegistryValue Type="string" Name="EventMessageFile" Value="[#AutostepExeFile]" />
           </RegistryKey>

@@ -5,11 +5,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-if (-not (Get-Command candle.exe -ErrorAction SilentlyContinue)) {
-    Write-Error "candle.exe not found. Install WiX Toolset 3.14+ and ensure it's on PATH."
-}
-if (-not (Get-Command light.exe -ErrorAction SilentlyContinue)) {
-    Write-Error "light.exe not found. Install WiX Toolset 3.14+ and ensure it's on PATH."
+if (-not (Get-Command wix.exe -ErrorAction SilentlyContinue)) {
+    Write-Error "wix.exe not found. Install WiX Toolset 4.x and ensure it's on PATH."
 }
 
 if (-not $Version) {
@@ -30,11 +27,9 @@ if (-not (Test-Path "$sourceDir\autostep.exe")) {
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
-$obj = Join-Path $OutDir "Product.wixobj"
 $msi = Join-Path $OutDir "autostep-$Version.msi"
 
-& candle.exe "-dSourceDir=$sourceDir" "-dVersion=$Version" "-out" $obj $wxs
-& light.exe -ext WixUtilExtension -cultures:en-us "-out" $msi $obj
+& wix.exe build $wxs -o $msi -dSourceDir="$sourceDir" -dVersion="$Version" -arch x64
 
 Write-Host "Built MSI: $msi"
 

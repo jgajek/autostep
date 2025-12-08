@@ -1,14 +1,24 @@
 Autostep MSI build instructions (Windows)
 
 Prereqs:
-- Windows with WiX Toolset 3.14+ installed (candle.exe, light.exe on PATH)
+- Windows with WiX Toolset 4 or later (v4–v6) installed (`wix.exe` on PATH). WiX 3.x (candle/light) is deprecated. Authoring uses the v4 schema and builds with `wix.exe` from WiX 6.
 - PowerShell (pwsh recommended)
+
+Install WiX Toolset:
+- Download WiX Toolset 4.x or 6.x from https://wixtoolset.org/ and install.
+- Ensure `wix.exe` is on PATH (e.g., `C:\Program Files\WiX Toolset v6\bin` or `C:\Program Files (x86)\WiX Toolset v4\bin`).
+- Verify: run `wix -?` in a new terminal.
 
 Steps:
 1) Open PowerShell in the unpacked package root (contains autostep.exe, manifest.json, workflows/, artifacts/, build/).
-2) Run: pwsh build/wix/build.ps1
-   - If you want to override the version: pwsh build/wix/build.ps1 -Version X.Y.Z
-3) Output MSI: build/wix/dist/autostep-<version>.msi
+2) Run: `pwsh build/wix/build.ps1`
+   - To override the version: `pwsh build/wix/build.ps1 -Version X.Y.Z`
+3) Output MSI: `build/wix/dist/autostep-<version>.msi`
+
+Install the Autostep MSI:
+- From an elevated prompt: `msiexec /i build\wix\dist\autostep-<version>.msi /qn` for silent install, or double-click for GUI.
+- Service `Autostep` installs (Automatic start) and SafeBoot registry keys allow it to start in Safe Mode/Networking.
+- ProgramData cache is seeded under `C:\ProgramData\Autostep\` with workflows/artifacts/manifest.
 
 Versioning:
 - build/version.txt holds the current version stamped into the MSI and binary.

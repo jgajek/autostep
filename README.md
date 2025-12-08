@@ -107,25 +107,15 @@ Extensibility: versioned action schema; new actions added with feature flags/def
 3) The workflow will: enable safeboot (minimal) → reboot → service auto-starts in Safe Mode and resumes → copy `hello.txt` to `%WINDIR%\Temp` → disable safeboot → reboot → service auto-starts in normal mode and resumes → verify file exists. No manual `resume-pending` is required; the service resumes automatically on each boot.  
 4) Check status if desired: `autostep status`.
 
-## Build MSI (WiX 3.14+, Windows)
-- Prereqs: Go 1.22+, WiX 3.14 (candle.exe, light.exe on PATH).
+## Build MSI (WiX 4+/6, Windows)
+- Prereqs: Go 1.22+, WiX Toolset 4 or later (v4–v6) with `wix.exe` on PATH. Authoring uses the v4 schema and builds successfully with WiX 6 `wix.exe`.
 - Build the binary with version info:  
   `set GOOS=windows`  
   `set GOARCH=amd64`  
   `go build -ldflags "-X main.version=0.1.0 -X main.commit=REPLACE_WITH_GIT_SHA -X main.buildDate=%DATE%" -o autostep.exe ./cmd/autostep`
 - Build MSI: `pwsh build/wix/build.ps1 -Version 0.1.0`.
 - Output: `build/wix/dist/autostep-0.1.0.msi`. Installs service + seeds ProgramData cache + SafeBoot registry entries + Event Log source.
-
-### Install WiX Toolset (Windows)
-- Download WiX Toolset 3.14 from https://wixtoolset.org/ and install.
-- Ensure `candle.exe` and `light.exe` are on PATH (typically `C:\Program Files (x86)\WiX Toolset v3.14\bin`).
-- Verify: run `candle -?` and `light -?` in a new terminal.
-
-### Install the Autostep MSI (Windows)
-- Obtain the built MSI (e.g., `autostep-0.1.0.msi`).
-- Run from an elevated prompt: `msiexec /i autostep-0.1.0.msi /qn` for silent install, or double-click for GUI.
-- Service `Autostep` will be installed (Automatic start) and SafeBoot registry keys will allow it to start in Safe Mode/Networking.
-- ProgramData cache is seeded under `C:\ProgramData\Autostep\` with workflows/artifacts/manifest.
+- For WiX install steps and MSI installation notes, see `build/README-msi-src.txt` (included in the MSI source bundle).
 
 ## Security notes
 - Service runs as LocalSystem by default (required for registry/system changes); consider configurable service account if reduced privileges are acceptable.

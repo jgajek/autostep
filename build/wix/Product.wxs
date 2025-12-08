@@ -1,27 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="*" Name="Autostep" Language="1033" Version="$(var.Version)" Manufacturer="Autostep" UpgradeCode="5A1F1F4C-2A0D-4E4A-A3B5-6C1A3211F7AA">
-    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" />
-
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Autostep" Manufacturer="Autostep" Version="$(var.Version)" Language="1033" UpgradeCode="5A1F1F4C-2A0D-4E4A-A3B5-6C1A3211F7AA" Platform="x64" Compressed="yes">
+    <SummaryInformation Description="Autostep Workflow Agent" />
     <MajorUpgrade DowngradeErrorMessage="A newer version of Autostep is already installed." />
-
     <MediaTemplate />
-
     <Property Id="ARPCONTACT" Value="Autostep" />
     <Property Id="ARPPRODUCTICON" Value="AutostepIcon" />
-
     <Icon Id="AutostepIcon" SourceFile="$(var.SourceDir)\autostep.exe" />
+    <Feature Id="Complete" Title="Autostep" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+      <ComponentRef Id="AutostepSafeBoot" />
+    </Feature>
+  </Package>
 
+  <Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="ProgramFilesFolder">
+      <Directory Id="ProgramFiles64Folder">
         <Directory Id="INSTALLFOLDER" Name="Autostep">
           <Component Id="AutostepExe" Guid="A44D962A-4F60-4740-8780-0B9F7B2DBE05">
-            <File Id="AutostepExeFile" Source="$(var.SourceDir)\autostep.exe" KeyPath="yes" />
+            <File Id="AutostepExeFile" Source="$(var.SourceDir)\autostep.exe" />
             <ServiceInstall Id="AutostepService" Name="Autostep" DisplayName="Autostep Workflow Agent" Description="Runs declarative workflows with reboot/resume support." Start="auto" Type="ownProcess" ErrorControl="normal" Vital="yes" />
             <ServiceControl Id="AutostepServiceControl" Name="Autostep" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
-            <!-- Register Event Log source -->
-            <RegistryKey Root="HKLM" Key="SYSTEM\CurrentControlSet\Services\EventLog\Application\Autostep" Action="create">
-              <RegistryValue Type="string" Name="EventMessageFile" Value="[#AutostepExeFile]" KeyPath="yes" />
+            <RegistryKey Root="HKLM" Key="SYSTEM\CurrentControlSet\Services\EventLog\Application\Autostep">
+              <RegistryValue Type="string" Name="EventMessageFile" Value="[#AutostepExeFile]" />
             </RegistryKey>
           </Component>
         </Directory>
@@ -30,7 +31,7 @@
         <Directory Id="AUTOSTEP_DATAROOT" Name="Autostep">
           <Component Id="AutostepDataDirs" Guid="51F26FBA-D507-4F2D-8E4D-6C8334F6C1B8">
             <CreateFolder />
-            <RegistryValue Root="HKLM" Key="Software\Autostep" Name="DataRoot" Type="string" Value="[AUTOSTEP_DATAROOT]" KeyPath="yes" />
+            <RegistryValue Root="HKLM" Key="Software\Autostep" Name="DataRoot" Type="string" Value="[AUTOSTEP_DATAROOT]" />
           </Component>
           <Directory Id="AUTOSTEP_WORKFLOWS" Name="workflows">
             <Component Id="AutostepWorkflows" Guid="3E9C1F0D-1D60-45E8-8F60-A8F5F9F5E2F2">
@@ -44,30 +45,32 @@
             </Component>
           </Directory>
           <Component Id="AutostepManifest" Guid="7D5A8DBB-B8E2-47F5-9E6E-0B91A7B5B641">
-            <File Source="$(var.SourceDir)\manifest.json" KeyPath="yes" />
+            <File Source="$(var.SourceDir)\manifest.json" />
           </Component>
         </Directory>
       </Directory>
     </Directory>
+  </Fragment>
 
-    <!-- Safe Mode service enablement -->
+  <Fragment>
     <Component Id="AutostepSafeBoot" Guid="BFC0E16A-0491-4F8E-A50B-BC1B37C2D8E1">
-      <RegistryKey Root="HKLM" Key="SYSTEM\CurrentControlSet\Control\SafeBoot\Minimal\Autostep" Action="create">
-        <RegistryValue Type="string" Value="Service" KeyPath="yes" />
+      <RegistryKey Root="HKLM" Key="SYSTEM\CurrentControlSet\Control\SafeBoot\Minimal\Autostep">
+        <RegistryValue Type="string" Value="Service" />
       </RegistryKey>
-      <RegistryKey Root="HKLM" Key="SYSTEM\CurrentControlSet\Control\SafeBoot\Network\Autostep" Action="create">
+      <RegistryKey Root="HKLM" Key="SYSTEM\CurrentControlSet\Control\SafeBoot\Network\Autostep">
         <RegistryValue Type="string" Value="Service" />
       </RegistryKey>
     </Component>
+  </Fragment>
 
-    <Feature Id="Complete" Title="Autostep" Level="1">
+  <Fragment>
+    <ComponentGroup Id="ProductComponents">
       <ComponentRef Id="AutostepExe" />
       <ComponentRef Id="AutostepDataDirs" />
       <ComponentRef Id="AutostepWorkflows" />
       <ComponentRef Id="AutostepArtifacts" />
       <ComponentRef Id="AutostepManifest" />
-      <ComponentRef Id="AutostepSafeBoot" />
-    </Feature>
-  </Product>
+    </ComponentGroup>
+  </Fragment>
 </Wix>
 

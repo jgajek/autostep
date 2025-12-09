@@ -9,9 +9,9 @@ steps:
     safe_mode: true
     resume_delay_seconds: 10
   - id: copy-hello
-    action: copy
-    from: cache://hello.txt
-    to: C:\Windows\Temp\autostep_hello.txt
+    action: file_copy
+    src_path: cache://hello.txt
+    dst_path: C:\Windows\Temp\autostep_hello.txt
   - id: disable-safemode
     action: safeboot
     safe_boot_mode: off

@@ -2,9 +2,9 @@ version: 1
 name: sample_copy
 steps:
   - id: copy-hello
-    action: copy
-    from: cache://hello.txt
-    to: C:\Temp\autostep_hello.txt
+    action: file_copy
+    src_path: cache://hello.txt
+    dst_path: C:\Temp\autostep_hello.txt
   - id: verify-hello
     action: verify
     assertions:

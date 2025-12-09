@@ -21,12 +21,19 @@ type Workflow struct {
 type Step struct {
 	ID                 string      `json:"id" yaml:"id"`
 	Action             string      `json:"action" yaml:"action"`
-	From               string      `json:"from,omitempty" yaml:"from,omitempty"`
-	To                 string      `json:"to,omitempty" yaml:"to,omitempty"`
+	SrcPath            string      `json:"src_path,omitempty" yaml:"src_path,omitempty"` // for file_* actions
+	DstPath            string      `json:"dst_path,omitempty" yaml:"dst_path,omitempty"` // for file_copy
+	NewName            string      `json:"new_name,omitempty" yaml:"new_name,omitempty"` // for file_rename
+	PathRegex          string      `json:"path_regex,omitempty" yaml:"path_regex,omitempty"`
+	HiveFile           string      `json:"hive_file,omitempty" yaml:"hive_file,omitempty"`     // for registry save/load/restore
+	Service            string      `json:"service,omitempty" yaml:"service,omitempty"`         // for service_* actions
+	DriverName         string      `json:"driver_name,omitempty" yaml:"driver_name,omitempty"` // for driver load/unload/status
+	DriverPath         string      `json:"driver_path,omitempty" yaml:"driver_path,omitempty"` // for driver load
 	VerifySHA256       string      `json:"verify_sha256,omitempty" yaml:"verify_sha256,omitempty"`
 	Path               string      `json:"path,omitempty" yaml:"path,omitempty"` // e.g., registry path or file path
 	Type               string      `json:"type,omitempty" yaml:"type,omitempty"` // e.g., registry type
 	Value              any         `json:"value,omitempty" yaml:"value,omitempty"`
+	Expected           any         `json:"expected,omitempty" yaml:"expected,omitempty"` // for registry_equals action
 	Command            string      `json:"command,omitempty" yaml:"command,omitempty"`
 	Args               []string    `json:"args,omitempty" yaml:"args,omitempty"`
 	Assertions         []Assertion `json:"assertions,omitempty" yaml:"assertions,omitempty"`

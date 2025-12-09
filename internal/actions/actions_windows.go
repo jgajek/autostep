@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
+	"golang.org/x/sys/windows/svc"
+	"golang.org/x/sys/windows/svc/mgr"
 )
 
 // RegistrySet writes a registry value at the given path.
@@ -66,6 +69,247 @@ func RegistryGetString(path string) (string, error) {
 	defer key.Close()
 	val, _, err := key.GetStringValue(name)
 	return val, err
+}
+
+// RegistrySave saves a registry key to a hive file.
+func RegistrySave(path string, hiveFile string) error {
+	if path == "" || hiveFile == "" {
+		return fmt.Errorf("registry_save requires path and hive_file")
+	}
+	cmd := exec.Command("reg.exe", "save", path, hiveFile, "/y")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("reg save failed: %v output: %s", err, string(out))
+	}
+	return nil
+}
+
+// RegistryRestore restores a registry key from a hive file.
+func RegistryRestore(path string, hiveFile string) error {
+	if path == "" || hiveFile == "" {
+		return fmt.Errorf("registry_restore requires path and hive_file")
+	}
+	cmd := exec.Command("reg.exe", "restore", path, hiveFile, "/y")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("reg restore failed: %v output: %s", err, string(out))
+	}
+	return nil
+}
+
+// RegistryLoad loads a hive into a key (usually under HKLM or HKU).
+func RegistryLoad(path string, hiveFile string) error {
+	if path == "" || hiveFile == "" {
+		return fmt.Errorf("registry_load requires path and hive_file")
+	}
+	cmd := exec.Command("reg.exe", "load", path, hiveFile)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("reg load failed: %v output: %s", err, string(out))
+	}
+	return nil
+}
+
+// RegistryUnload unloads a hive from a key.
+func RegistryUnload(path string) error {
+	if path == "" {
+		return fmt.Errorf("registry_unload requires path")
+	}
+	cmd := exec.Command("reg.exe", "unload", path)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("reg unload failed: %v output: %s", err, string(out))
+	}
+	return nil
+}
+
+// RegistryAppend appends a suffix to an existing string value.
+func RegistryAppend(path string, suffix string) error {
+	if path == "" {
+		return fmt.Errorf("registry_append requires path")
+	}
+	root, subkey, name, err := splitRegistryPath(path)
+	if err != nil {
+		return err
+	}
+	key, err := registry.OpenKey(root, subkey, registry.QUERY_VALUE|registry.SET_VALUE)
+	if err != nil {
+		return err
+	}
+	defer key.Close()
+	current, _, err := key.GetStringValue(name)
+	if err != nil {
+		return fmt.Errorf("read existing value: %w", err)
+	}
+	return key.SetStringValue(name, current+suffix)
+}
+
+// ServiceStart starts a Windows service.
+func ServiceStart(name string) error {
+	if name == "" {
+		return fmt.Errorf("service_start requires service")
+	}
+	m, err := mgr.Connect()
+	if err != nil {
+		return fmt.Errorf("connect service manager: %w", err)
+	}
+	defer m.Disconnect()
+
+	s, err := m.OpenService(name)
+	if err != nil {
+		return fmt.Errorf("open service %s: %w", name, err)
+	}
+	defer s.Close()
+
+	if err := s.Start(); err != nil {
+		return fmt.Errorf("start service %s: %w", name, err)
+	}
+	return nil
+}
+
+// ServiceStop stops a Windows service.
+func ServiceStop(name string) error {
+	if name == "" {
+		return fmt.Errorf("service_stop requires service")
+	}
+	m, err := mgr.Connect()
+	if err != nil {
+		return fmt.Errorf("connect service manager: %w", err)
+	}
+	defer m.Disconnect()
+
+	s, err := m.OpenService(name)
+	if err != nil {
+		return fmt.Errorf("open service %s: %w", name, err)
+	}
+	defer s.Close()
+
+	status, err := s.Control(svc.Stop)
+	if err != nil {
+		return fmt.Errorf("stop service %s: %w", name, err)
+	}
+	if status.State != svc.Stopped && status.State != svc.StopPending {
+		return fmt.Errorf("service %s unexpected state after stop: %v", name, status.State)
+	}
+	return nil
+}
+
+// ServiceRunning reports whether a Windows service is running.
+func ServiceRunning(name string) (bool, error) {
+	if name == "" {
+		return false, fmt.Errorf("service_running requires service")
+	}
+	m, err := mgr.Connect()
+	if err != nil {
+		return false, fmt.Errorf("connect service manager: %w", err)
+	}
+	defer m.Disconnect()
+
+	s, err := m.OpenService(name)
+	if err != nil {
+		return false, fmt.Errorf("open service %s: %w", name, err)
+	}
+	defer s.Close()
+
+	status, err := s.Query()
+	if err != nil {
+		return false, fmt.Errorf("query service %s: %w", name, err)
+	}
+	return status.State == svc.Running, nil
+}
+
+// DriverLoad installs (if needed) and starts a kernel driver.
+func DriverLoad(name string, path string) error {
+	if name == "" || path == "" {
+		return fmt.Errorf("driver_load requires driver_name and driver_path")
+	}
+	m, err := mgr.Connect()
+	if err != nil {
+		return fmt.Errorf("connect service manager: %w", err)
+	}
+	defer m.Disconnect()
+
+	s, err := m.OpenService(name)
+	if err != nil {
+		// Try to create if not present.
+		cfg := mgr.Config{
+			DisplayName:    name,
+			ServiceType:    windows.SERVICE_KERNEL_DRIVER,
+			StartType:      mgr.StartManual,
+			BinaryPathName: path,
+		}
+		s, err = m.CreateService(name, path, cfg)
+		if err != nil {
+			return fmt.Errorf("create driver service %s: %w", name, err)
+		}
+	}
+	defer s.Close()
+
+	if err := s.Start(); err != nil {
+		// If already running, consider it success.
+		if !errors.Is(err, windows.ERROR_SERVICE_ALREADY_RUNNING) {
+			return fmt.Errorf("start driver %s: %w", name, err)
+		}
+	}
+	return nil
+}
+
+// DriverUnload stops and deletes the kernel driver service.
+func DriverUnload(name string) error {
+	if name == "" {
+		return fmt.Errorf("driver_unload requires driver_name")
+	}
+	m, err := mgr.Connect()
+	if err != nil {
+		return fmt.Errorf("connect service manager: %w", err)
+	}
+	defer m.Disconnect()
+
+	s, err := m.OpenService(name)
+	if err != nil {
+		return fmt.Errorf("open driver service %s: %w", name, err)
+	}
+	defer s.Close()
+
+	status, err := s.Control(svc.Stop)
+	if err == nil {
+		for i := 0; i < 10 && status.State == svc.StopPending; i++ {
+			time.Sleep(200 * time.Millisecond)
+			status, err = s.Query()
+			if err != nil {
+				break
+			}
+		}
+	}
+	// Ignore stop errors; attempt delete regardless.
+	if err := s.Delete(); err != nil {
+		return fmt.Errorf("delete driver service %s: %w", name, err)
+	}
+	return nil
+}
+
+// DriverLoaded reports whether the kernel driver service is running.
+func DriverLoaded(name string) (bool, error) {
+	if name == "" {
+		return false, fmt.Errorf("driver_loaded requires driver_name")
+	}
+	m, err := mgr.Connect()
+	if err != nil {
+		return false, fmt.Errorf("connect service manager: %w", err)
+	}
+	defer m.Disconnect()
+
+	s, err := m.OpenService(name)
+	if err != nil {
+		return false, fmt.Errorf("open driver service %s: %w", name, err)
+	}
+	defer s.Close()
+
+	status, err := s.Query()
+	if err != nil {
+		return false, fmt.Errorf("query driver service %s: %w", name, err)
+	}
+	return status.State == svc.Running, nil
 }
 
 // RequestReboot asks Windows to reboot. safeMode flag is recorded by caller; entry into

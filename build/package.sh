@@ -136,7 +136,7 @@ if [[ -n "$PWSH_CMD" && -x "$PWSH_CMD" && "$WIX_FOUND" -eq 1 ]]; then
   " || echo "Windows-side MSI build failed."
 
   # Copy built MSI back if present
-  WIN_MSI_PATH="$WIN_DEST_WSL/build/wix/dist/autostep-$NEW_VERSION.msi"
+  WIN_MSI_PATH="$WIN_DEST_WSL/build/dist/autostep-$NEW_VERSION.msi"
   if [ -f "$WIN_MSI_PATH" ]; then
     cp "$WIN_MSI_PATH" "$MSI_OUT/"
     echo "MSI copied to: $MSI_OUT/autostep-$NEW_VERSION.msi"

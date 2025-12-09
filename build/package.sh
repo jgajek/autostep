@@ -121,7 +121,12 @@ if command -v "$PWSH_CMD" >/dev/null 2>&1 && [[ "$WIX_FOUND" -eq 1 ]]; then
     \$dest = '$WIN_DEST';
     if (Test-Path \$dest) { Remove-Item \$dest -Recurse -Force -ErrorAction SilentlyContinue }
     Expand-Archive -Path \$zip -DestinationPath \$dest -Force
-    pwsh -NoProfile -ExecutionPolicy Bypass -File \"\$dest\\build\\wix\\build.ps1\" -Version $NEW_VERSION
+    \$buildScript = Join-Path \$dest 'build\\wix\\build.ps1'
+    if (Test-Path \$buildScript) {
+      pwsh -NoProfile -ExecutionPolicy Bypass -File \$buildScript -Version $NEW_VERSION
+    } else {
+      Write-Error \"Build script not found: \$buildScript\"
+    }
   " || echo "Windows-side MSI build failed."
 
   # Copy built MSI back if present

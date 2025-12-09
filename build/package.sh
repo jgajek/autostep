@@ -64,44 +64,39 @@ echo "Packaged: $MSI_DIR/$ZIP_NAME"
 echo "Next (Windows): copy the zip to a Windows-backed path (e.g., /mnt/c/Users/<You>/Downloads), unzip, and run: pwsh -File build/wix/build.ps1"
 
 # Attempt to build MSI automatically via Windows toolchain even when repo is on WSL-only path.
-PWSH_CMD="pwsh.exe"
-if ! command -v "$PWSH_CMD" >/dev/null 2>&1; then
-  # Try to find pwsh under Program Files paths
-  PWSH_CANDIDATES=$(ls /mnt/c/Program\ Files*/PowerShell/*/pwsh.exe 2>/dev/null || true)
+PWSH_CMD="${PWSH_CMD:-}"
+PWSH_CANDIDATES=$(ls /mnt/c/Program\ Files*/PowerShell/*/pwsh.exe 2>/dev/null || true)
+if [[ -z "$PWSH_CMD" ]]; then
   for c in $PWSH_CANDIDATES; do
     PWSH_CMD="$c"
     break
   done
 fi
 
-WIX_FOUND=0
 WIN_WIX_PATH_DEFAULT="C:\\Program Files\\WiX Toolset v6.0\\bin\\wix.exe"
+WIX_FOUND=0
 
-# Auto-discover wix.exe under /mnt/c/Program Files*/WiX Toolset*/bin
 if command -v "$PWSH_CMD" >/dev/null 2>&1; then
-  # First try PATH
-  if "$PWSH_CMD" -NoProfile -Command "Get-Command wix.exe" >/dev/null 2>&1; then
+  # Use override if provided
+  if [[ -n "${WIN_WIX_PATH:-}" ]] && "$PWSH_CMD" -NoProfile -Command "Test-Path '$WIN_WIX_PATH'" >/dev/null 2>&1; then
     WIX_FOUND=1
-  else
-    # Try provided override
-    if [[ -n "${WIN_WIX_PATH:-}" ]] && "$PWSH_CMD" -NoProfile -Command "Test-Path '$WIN_WIX_PATH'" >/dev/null 2>&1; then
-      WIX_FOUND=1
-    else
-      # Discover via mounted paths
-      CANDIDATES=$(ls /mnt/c/Program\ Files*/WiX\ Toolset*/bin/wix.exe 2>/dev/null || true)
-      for c in $CANDIDATES; do
-        WIN_WIX_PATH="$(wslpath -w "$c")"
-        if "$PWSH_CMD" -NoProfile -Command "Test-Path '$WIN_WIX_PATH'" >/dev/null 2>&1; then
-          WIX_FOUND=1
-          break
-        fi
-      done
-      if [[ "$WIX_FOUND" -eq 0 ]]; then
-        WIN_WIX_PATH="$WIN_WIX_PATH_DEFAULT"
-        if "$PWSH_CMD" -NoProfile -Command "Test-Path '$WIN_WIX_PATH'" >/dev/null 2>&1; then
-          WIX_FOUND=1
-        fi
+  fi
+  # Try mounted Program Files locations
+  if [[ "$WIX_FOUND" -eq 0 ]]; then
+    CANDIDATES=$(ls /mnt/c/Program\ Files*/WiX\ Toolset*/bin/wix.exe 2>/dev/null || true)
+    for c in $CANDIDATES; do
+      WIN_WIX_PATH="$(wslpath -w "$c")"
+      if "$PWSH_CMD" -NoProfile -Command "Test-Path '$WIN_WIX_PATH'" >/dev/null 2>&1; then
+        WIX_FOUND=1
+        break
       fi
+    done
+  fi
+  # Try default fallback
+  if [[ "$WIX_FOUND" -eq 0 ]]; then
+    WIN_WIX_PATH="$WIN_WIX_PATH_DEFAULT"
+    if "$PWSH_CMD" -NoProfile -Command "Test-Path '$WIN_WIX_PATH'" >/dev/null 2>&1; then
+      WIX_FOUND=1
     fi
   fi
 fi

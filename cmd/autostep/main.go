@@ -212,7 +212,12 @@ func resumePending(logger *log.Logger, p paths.Paths) error {
 		}
 		wfPath := ref.Path
 		if !filepath.IsAbs(wfPath) {
-			wfPath = filepath.Join(p.WorkflowsDir, wfPath)
+			clean := filepath.Clean(wfPath)
+			if strings.HasPrefix(clean, "workflows"+string(filepath.Separator)) || strings.HasPrefix(clean, "workflows/") {
+				wfPath = filepath.Join(p.Root, clean)
+			} else {
+				wfPath = filepath.Join(p.WorkflowsDir, clean)
+			}
 		}
 		wf, err := workflow.Load(wfPath)
 		if err != nil {

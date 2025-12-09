@@ -162,6 +162,7 @@ func (s *Store) MarkStepFailed(runID string, stepIndex int, errMsg string) error
 	rec.Status = StatusFailed
 	rec.LastError = errMsg
 	rec.UpdatedAt = time.Now().UTC()
+	s.pruneHistoryLocked()
 	return s.persistLocked()
 }
 
@@ -207,7 +208,29 @@ func (s *Store) MarkRunCompleted(runID string) error {
 	}
 	rec.Status = StatusCompleted
 	rec.UpdatedAt = time.Now().UTC()
+	s.pruneHistoryLocked()
 	return s.persistLocked()
+}
+
+// pruneHistoryLocked keeps pending/incomplete runs and retains only the most recent completed/failed run.
+func (s *Store) pruneHistoryLocked() {
+	var latestKey string
+	var latestTime time.Time
+	for k, v := range s.runs {
+		if v.Status == StatusCompleted || v.Status == StatusFailed {
+			if v.UpdatedAt.After(latestTime) || latestKey == "" {
+				latestKey = k
+				latestTime = v.UpdatedAt
+			}
+		}
+	}
+	for k, v := range s.runs {
+		if v.Status == StatusCompleted || v.Status == StatusFailed {
+			if k != latestKey {
+				delete(s.runs, k)
+			}
+		}
+	}
 }
 
 func (s *Store) persistLocked() error {

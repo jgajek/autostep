@@ -90,7 +90,8 @@ func RegistryRestore(path string, hiveFile string) error {
 	if path == "" || hiveFile == "" {
 		return fmt.Errorf("registry_restore requires path and hive_file")
 	}
-	cmd := exec.Command("reg.exe", "restore", path, hiveFile, "/y")
+	// reg restore does not support /y; restore overwrites the key specified.
+	cmd := exec.Command("reg.exe", "restore", path, hiveFile)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("reg restore failed: %v output: %s", err, string(out))

@@ -21,6 +21,12 @@
       "path": "workflows/disable_cs_driver.yaml",
       "version": "1.0.0",
       "artifacts": []
+    },
+    {
+      "name": "enable_cs_driver",
+      "path": "workflows/enable_cs_driver.yaml",
+      "version": "1.0.0",
+      "artifacts": []
     }
   ]
 }

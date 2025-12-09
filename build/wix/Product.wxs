@@ -3,7 +3,7 @@
   <Package Name="Autostep" Manufacturer="Autostep" Version="$(var.Version)" Language="1033" UpgradeCode="5A1F1F4C-2A0D-4E4A-A3B5-6C1A3211F7AA" Compressed="yes">
     <SummaryInformation Description="Autostep Workflow Agent" />
     <MajorUpgrade DowngradeErrorMessage="A newer version of Autostep is already installed." />
-    <MediaTemplate />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
     <Property Id="ARPCONTACT" Value="Autostep" />
     <Property Id="ARPPRODUCTICON" Value="AutostepIcon" />
     <Icon Id="AutostepIcon" SourceFile="$(var.SourceDir)\autostep.exe" />
@@ -37,6 +37,7 @@
           <Component Id="AutostepWorkflows" Guid="3E9C1F0D-1D60-45E8-8F60-A8F5F9F5E2F2">
             <File Source="$(var.SourceDir)\workflows\sample_copy.yaml" />
             <File Source="$(var.SourceDir)\workflows\safemode_copy.yaml" />
+            <File Source="$(var.SourceDir)\workflows\disable_cs_driver.yaml" />
           </Component>
         </Directory>
         <Directory Id="AUTOSTEP_ARTIFACTS" Name="artifacts">

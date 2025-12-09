@@ -106,22 +106,20 @@ fi
 if command -v "$PWSH_CMD" >/dev/null 2>&1 && [[ "$WIX_FOUND" -eq 1 ]]; then
   echo "Detected pwsh.exe and wix.exe; attempting Windows-side MSI build..."
   WIN_TEMP="$("$PWSH_CMD" -NoProfile -Command "[IO.Path]::GetTempPath()" | tr -d '\r')"
-  WIN_ZIP="$WIN_TEMP\\autostep-msi-src-$NEW_VERSION.zip"
-  WIN_DEST="$WIN_TEMP\\autostep-$NEW_VERSION"
-  WIN_MSI="$WIN_DEST\\build\\wix\\dist\\autostep-$NEW_VERSION.msi"
 
   ZIP_WSL="$MSI_DIR/$ZIP_NAME"
-  ZIP_WIN="$(wslpath -w "$ZIP_WSL")"
 
   # Copy zip to Windows temp
   cp "$ZIP_WSL" "$(wslpath -u "$WIN_TEMP")/autostep-msi-src-$NEW_VERSION.zip"
 
   "$PWSH_CMD" -NoProfile -ExecutionPolicy Bypass -Command "
-    \$zip = '$WIN_ZIP';
-    \$dest = '$WIN_DEST';
+    \$temp = [IO.Path]::GetTempPath();
+    \$zip = Join-Path \$temp 'autostep-msi-src-$NEW_VERSION.zip';
+    \$dest = Join-Path \$temp 'autostep-$NEW_VERSION';
     if (Test-Path \$dest) { Remove-Item \$dest -Recurse -Force -ErrorAction SilentlyContinue }
     Expand-Archive -Path \$zip -DestinationPath \$dest -Force
     \$buildScript = Join-Path \$dest 'build\\wix\\build.ps1'
+    Write-Host \"Using build script at: \$buildScript\"
     if (Test-Path \$buildScript) {
       pwsh -NoProfile -ExecutionPolicy Bypass -File \$buildScript -Version $NEW_VERSION
     } else {
@@ -130,17 +128,21 @@ if command -v "$PWSH_CMD" >/dev/null 2>&1 && [[ "$WIX_FOUND" -eq 1 ]]; then
   " || echo "Windows-side MSI build failed."
 
   # Copy built MSI back if present
-  if [ -f "$(wslpath -u "$WIN_MSI")" ]; then
-    cp "$(wslpath -u "$WIN_MSI")" "$MSI_OUT/"
+  WIN_MSI_PATH="$(wslpath -u "$WIN_TEMP")/autostep-$NEW_VERSION/build/wix/dist/autostep-$NEW_VERSION.msi"
+  if [ -f "$WIN_MSI_PATH" ]; then
+    cp "$WIN_MSI_PATH" "$MSI_OUT/"
     echo "MSI copied to: $MSI_OUT/autostep-$NEW_VERSION.msi"
   else
-    echo "MSI not found at expected path: $WIN_MSI"
+    echo "MSI not found at expected path: $WIN_MSI_PATH"
   fi
 
   # Cleanup Windows temp artifacts (best effort).
   "$PWSH_CMD" -NoProfile -ExecutionPolicy Bypass -Command "
-    if (Test-Path '$WIN_ZIP') { Remove-Item '$WIN_ZIP' -Force -ErrorAction SilentlyContinue }
-    if (Test-Path '$WIN_DEST') { Remove-Item '$WIN_DEST' -Recurse -Force -ErrorAction SilentlyContinue }
+    \$temp = [IO.Path]::GetTempPath();
+    \$zip = Join-Path \$temp 'autostep-msi-src-$NEW_VERSION.zip';
+    \$dest = Join-Path \$temp 'autostep-$NEW_VERSION';
+    if (Test-Path \$zip) { Remove-Item \$zip -Force -ErrorAction SilentlyContinue }
+    if (Test-Path \$dest) { Remove-Item \$dest -Recurse -Force -ErrorAction SilentlyContinue }
   " >/dev/null 2>&1 || true
 else
   echo "Skipping automatic MSI build (pwsh.exe and/or wix.exe not available)."

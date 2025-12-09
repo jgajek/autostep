@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+	"unsafe"
 
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
@@ -322,6 +323,9 @@ func DriverLoaded(name string) (bool, error) {
 // RequestReboot asks Windows to reboot. safeMode flag is recorded by caller; entry into
 // Safe Mode is handled by workflow steps (e.g., BCD edits) before this call.
 func RequestReboot(safeMode bool) error {
+	if err := enablePrivilege("SeShutdownPrivilege"); err != nil {
+		return fmt.Errorf("enable shutdown privilege: %w", err)
+	}
 	flags := uint32(windows.EWX_REBOOT | windows.EWX_FORCEIFHUNG)
 	// The caller is responsible for preparing the boot mode; we only trigger reboot.
 	return windows.ExitWindowsEx(flags, windows.SHTDN_REASON_MAJOR_OTHER)
@@ -422,4 +426,30 @@ func toUint32(v any) (uint32, error) {
 	default:
 		return 0, fmt.Errorf("cannot convert %T to dword", v)
 	}
+}
+
+// enablePrivilege enables a privilege for the current process token.
+func enablePrivilege(priv string) error {
+	var hToken windows.Token
+	if err := windows.OpenProcessToken(windows.CurrentProcess(), windows.TOKEN_ADJUST_PRIVILEGES|windows.TOKEN_QUERY, &hToken); err != nil {
+		return err
+	}
+	defer hToken.Close()
+
+	var luid windows.LUID
+	if err := windows.LookupPrivilegeValue(nil, windows.StringToUTF16Ptr(priv), &luid); err != nil {
+		return err
+	}
+
+	tp := windows.Tokenprivileges{
+		PrivilegeCount: 1,
+		Privileges: [1]windows.LUIDAndAttributes{
+			{
+				Luid:       luid,
+				Attributes: windows.SE_PRIVILEGE_ENABLED,
+			},
+		},
+	}
+
+	return windows.AdjustTokenPrivileges(hToken, false, &tp, uint32(unsafe.Sizeof(tp)), nil, nil)
 }

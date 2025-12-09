@@ -15,7 +15,7 @@ steps:
     action: registry_set
     path: HKLM\BACKUP001\Start
     type: dword
-    value: 0
+    value: 1
 
   - id: unload-backup
     action: registry_unload
@@ -31,5 +31,5 @@ steps:
     assertions:
       - kind: registry_equals
         path: HKLM\SYSTEM\CurrentControlSet\Services\CSAgent\Start
-        expected: 0
+        expected: 1
 

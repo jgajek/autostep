@@ -121,7 +121,7 @@ if [[ -n "$PWSH_CMD" && -x "$PWSH_CMD" && "$WIX_FOUND" -eq 1 ]]; then
     \$wixPath = '$WIN_WIX_PATH';
     if (Test-Path \$wixPath) {
       \$wixDir = Split-Path \$wixPath;
-      \$env:PATH = \"\$wixDir;$env:PATH\";
+      \$env:PATH = \"\$wixDir;\$env:PATH\";
       Write-Host \"Using WiX at: \$wixPath\";
     }
     \$buildScript = Join-Path \$dest 'build\\wix\\build.ps1'

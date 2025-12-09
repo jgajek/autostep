@@ -117,13 +117,16 @@ if command -v "$PWSH_CMD" >/dev/null 2>&1 && [[ "$WIX_FOUND" -eq 1 ]]; then
     \$zip = Join-Path \$temp 'autostep-msi-src-$NEW_VERSION.zip';
     \$dest = Join-Path \$temp 'autostep-$NEW_VERSION';
     if (Test-Path \$dest) { Remove-Item \$dest -Recurse -Force -ErrorAction SilentlyContinue }
-    Expand-Archive -Path \$zip -DestinationPath \$dest -Force
+    if (-not (Test-Path \$zip)) { Write-Error \"Zip not found: \$zip\"; exit 1 }
+    Expand-Archive -Path \$zip -DestinationPath \$dest -Force -ErrorAction Stop
     \$buildScript = Join-Path \$dest 'build\\wix\\build.ps1'
     Write-Host \"Using build script at: \$buildScript\"
     if (Test-Path \$buildScript) {
       pwsh -NoProfile -ExecutionPolicy Bypass -File \$buildScript -Version $NEW_VERSION
     } else {
+      if (Test-Path \$dest) { Get-ChildItem -Recurse \$dest | Select-Object FullName }
       Write-Error \"Build script not found: \$buildScript\"
+      exit 1
     }
   " || echo "Windows-side MSI build failed."
 

@@ -65,30 +65,32 @@ echo "Next (Windows): copy the zip to a Windows-backed path (e.g., /mnt/c/Users/
 
 # Attempt to build MSI automatically via Windows toolchain even when repo is on WSL-only path.
 PWSH_CMD="${PWSH_CMD:-}"
-PWSH_CANDIDATES=$(ls /mnt/c/Program\ Files*/PowerShell/*/pwsh.exe 2>/dev/null || true)
 if [[ -z "$PWSH_CMD" ]]; then
-  for c in $PWSH_CANDIDATES; do
-    PWSH_CMD="$c"
-    break
+  for c in /mnt/c/Program\ Files*/PowerShell/*/pwsh.exe; do
+    if [[ -e "$c" ]]; then
+      PWSH_CMD="$c"
+      break
+    fi
   done
 fi
 
 WIN_WIX_PATH_DEFAULT="C:\\Program Files\\WiX Toolset v6.0\\bin\\wix.exe"
 WIX_FOUND=0
 
-if command -v "$PWSH_CMD" >/dev/null 2>&1; then
+if [[ -n "$PWSH_CMD" && -x "$PWSH_CMD" ]]; then
   # Use override if provided
   if [[ -n "${WIN_WIX_PATH:-}" ]] && "$PWSH_CMD" -NoProfile -Command "Test-Path '$WIN_WIX_PATH'" >/dev/null 2>&1; then
     WIX_FOUND=1
   fi
   # Try mounted Program Files locations
   if [[ "$WIX_FOUND" -eq 0 ]]; then
-    CANDIDATES=$(ls /mnt/c/Program\ Files*/WiX\ Toolset*/bin/wix.exe 2>/dev/null || true)
-    for c in $CANDIDATES; do
-      WIN_WIX_PATH="$(wslpath -w "$c")"
-      if "$PWSH_CMD" -NoProfile -Command "Test-Path '$WIN_WIX_PATH'" >/dev/null 2>&1; then
-        WIX_FOUND=1
-        break
+    for c in /mnt/c/Program\ Files*/WiX\ Toolset*/bin/wix.exe; do
+      if [[ -e "$c" ]]; then
+        WIN_WIX_PATH="$(wslpath -w "$c")"
+        if "$PWSH_CMD" -NoProfile -Command "Test-Path '$WIN_WIX_PATH'" >/dev/null 2>&1; then
+          WIX_FOUND=1
+          break
+        fi
       fi
     done
   fi

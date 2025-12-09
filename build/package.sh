@@ -103,35 +103,39 @@ if [[ -n "$PWSH_CMD" && -x "$PWSH_CMD" ]]; then
   fi
 fi
 
-if command -v "$PWSH_CMD" >/dev/null 2>&1 && [[ "$WIX_FOUND" -eq 1 ]]; then
+if [[ -n "$PWSH_CMD" && -x "$PWSH_CMD" && "$WIX_FOUND" -eq 1 ]]; then
   echo "Detected pwsh.exe and wix.exe; attempting Windows-side MSI build..."
   WIN_TEMP="$("$PWSH_CMD" -NoProfile -Command "[IO.Path]::GetTempPath()" | tr -d '\r')"
+  WIN_TEMP_WSL="$(wslpath -u "$WIN_TEMP")"
+  WIN_DEST="$WIN_TEMP\\autostep-$NEW_VERSION"
+  WIN_DEST_WSL="$(wslpath -u "$WIN_DEST")"
 
   ZIP_WSL="$MSI_DIR/$ZIP_NAME"
 
-  # Copy zip to Windows temp
-  cp "$ZIP_WSL" "$(wslpath -u "$WIN_TEMP")/autostep-msi-src-$NEW_VERSION.zip"
+  # Prepare destination and unzip on Windows-backed path
+  mkdir -p "$WIN_DEST_WSL"
+  unzip -o "$ZIP_WSL" -d "$WIN_TEMP_WSL" >/dev/null
 
   "$PWSH_CMD" -NoProfile -ExecutionPolicy Bypass -Command "
-    \$temp = [IO.Path]::GetTempPath();
-    \$zip = Join-Path \$temp 'autostep-msi-src-$NEW_VERSION.zip';
-    \$dest = Join-Path \$temp 'autostep-$NEW_VERSION';
-    if (Test-Path \$dest) { Remove-Item \$dest -Recurse -Force -ErrorAction SilentlyContinue }
-    if (-not (Test-Path \$zip)) { Write-Error \"Zip not found: \$zip\"; exit 1 }
-    Expand-Archive -Path \$zip -DestinationPath \$dest -Force -ErrorAction Stop
+    \$dest = '$WIN_DEST';
+    \$wixPath = '$WIN_WIX_PATH';
+    if (Test-Path \$wixPath) {
+      \$env:PATH = \"$(Split-Path \$wixPath);$env:PATH\";
+      Write-Host \"Using WiX at: \$wixPath\";
+    }
     \$buildScript = Join-Path \$dest 'build\\wix\\build.ps1'
     Write-Host \"Using build script at: \$buildScript\"
     if (Test-Path \$buildScript) {
       pwsh -NoProfile -ExecutionPolicy Bypass -File \$buildScript -Version $NEW_VERSION
     } else {
-      if (Test-Path \$dest) { Get-ChildItem -Recurse \$dest | Select-Object FullName }
       Write-Error \"Build script not found: \$buildScript\"
+      if (Test-Path \$dest) { Get-ChildItem -Recurse \$dest | Select-Object FullName }
       exit 1
     }
   " || echo "Windows-side MSI build failed."
 
   # Copy built MSI back if present
-  WIN_MSI_PATH="$(wslpath -u "$WIN_TEMP")/autostep-$NEW_VERSION/build/wix/dist/autostep-$NEW_VERSION.msi"
+  WIN_MSI_PATH="$WIN_DEST_WSL/build/wix/dist/autostep-$NEW_VERSION.msi"
   if [ -f "$WIN_MSI_PATH" ]; then
     cp "$WIN_MSI_PATH" "$MSI_OUT/"
     echo "MSI copied to: $MSI_OUT/autostep-$NEW_VERSION.msi"

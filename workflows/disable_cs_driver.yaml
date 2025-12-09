@@ -1,0 +1,35 @@
+version: 1
+name: disable_cs_driver
+steps:
+  - id: save-csagent
+    action: registry_save
+    path: HKLM\SYSTEM\CurrentControlSet\Services\CSAgent
+    hive_file: C:\Windows\Temp\backup.hiv
+
+  - id: load-backup
+    action: registry_load
+    path: HKLM\BACKUP001
+    hive_file: C:\Windows\Temp\backup.hiv
+
+  - id: set-start-disabled
+    action: registry_set
+    path: HKLM\BACKUP001\Start
+    type: dword
+    value: 4
+
+  - id: unload-backup
+    action: registry_unload
+    path: HKLM\BACKUP001
+
+  - id: restore-csagent
+    action: registry_restore
+    path: HKLM\SYSTEM\CurrentControlSet\Services\CSAgent
+    hive_file: C:\Windows\Temp\backup.hiv
+
+  - id: verify-start-disabled
+    action: verify
+    assertions:
+      - kind: registry_equals
+        path: HKLM\SYSTEM\CurrentControlSet\Services\CSAgent\Start
+        expected: 4
+

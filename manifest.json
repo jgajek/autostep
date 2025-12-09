@@ -15,6 +15,12 @@
       "artifacts": [
         "artifacts/hello.txt"
       ]
+    },
+    {
+      "name": "disable_cs_driver",
+      "path": "workflows/disable_cs_driver.yaml",
+      "version": "1.0.0",
+      "artifacts": []
     }
   ]
 }

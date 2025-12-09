@@ -3,6 +3,7 @@
 package actions
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"

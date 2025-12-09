@@ -68,8 +68,13 @@ func RegistryGetString(path string) (string, error) {
 		return "", err
 	}
 	defer key.Close()
-	val, _, err := key.GetStringValue(name)
-	return val, err
+	if val, _, err := key.GetStringValue(name); err == nil {
+		return val, nil
+	}
+	if dword, _, err := key.GetIntegerValue(name); err == nil {
+		return fmt.Sprint(dword), nil
+	}
+	return "", fmt.Errorf("registry value %s not found or unsupported type", path)
 }
 
 // RegistrySave saves a registry key to a hive file.

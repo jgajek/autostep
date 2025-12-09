@@ -38,6 +38,7 @@
             <File Source="$(var.SourceDir)\workflows\sample_copy.yaml" />
             <File Source="$(var.SourceDir)\workflows\safemode_copy.yaml" />
             <File Source="$(var.SourceDir)\workflows\disable_cs_driver.yaml" />
+            <File Source="$(var.SourceDir)\workflows\enable_cs_driver.yaml" />
           </Component>
         </Directory>
         <Directory Id="AUTOSTEP_ARTIFACTS" Name="artifacts">

@@ -1,0 +1,1 @@
+cd /home/jgajek/repos/autostep && ./build/package.sh
